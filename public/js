@@ -1,0 +1,159 @@
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Custom Cursor
+    const cursor = document.getElementById('cursor');
+    const follower = document.getElementById('cursorFollower');
+    let mx = 0, my = 0, fx = 0, fy = 0;
+
+    document.addEventListener('mousemove', e => {
+        mx = e.clientX; my = e.clientY;
+        cursor.style.left = mx + 'px';
+        cursor.style.top  = my + 'px';
+    });
+
+    function animateFollower() {
+        fx += (mx - fx) * 0.12;
+        fy += (my - fy) * 0.12;
+        follower.style.left = fx + 'px';
+        follower.style.top  = fy + 'px';
+        requestAnimationFrame(animateFollower);
+    }
+    animateFollower();
+
+    document.querySelectorAll('a, button, .exp-card, .contact-card, .timeline-item').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+            cursor.style.transform = 'translate(-50%,-50%) scale(2)';
+            follower.style.transform = 'translate(-50%,-50%) scale(1.5)';
+            follower.style.opacity = '0.3';
+        });
+        el.addEventListener('mouseleave', () => {
+            cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+            follower.style.transform = 'translate(-50%,-50%) scale(1)';
+            follower.style.opacity = '0.6';
+        });
+    });
+
+    // Active Nav on Scroll
+    const sections = document.querySelectorAll('.section');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const sectionObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id;
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.dataset.section === id);
+                });
+            }
+        });
+    }, { threshold: 0.4 });
+
+    sections.forEach(s => sectionObserver.observe(s));
+
+    // Smooth Scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', e => {
+            e.preventDefault();
+            const target = document.querySelector(a.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+
+    // Reveal Items on Scroll
+    const revealObserver = new IntersectionObserver(entries => {
+        entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => entry.target.classList.add('visible'), i * 80);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal-item').forEach(el => revealObserver.observe(el));
+
+    // Skill Bars Animation
+    const skillObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.querySelectorAll('.skill-fill').forEach(fill => fill.classList.add('animated'));
+                skillObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.3 });
+
+    const skillsSection = document.querySelector('.skills-section');
+    if (skillsSection) skillObserver.observe(skillsSection);
+
+    // Counter Animation
+    function animateCounter(el, target, suffix = '') {
+        let start = 0;
+        const step = Math.ceil(target / (1800 / 16));
+        const timer = setInterval(() => {
+            start = Math.min(start + step, target);
+            el.textContent = start + suffix;
+            if (start >= target) clearInterval(timer);
+        }, 16);
+    }
+
+    const counterObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                document.querySelectorAll('.stat-box').forEach(box => {
+                    const el     = box.querySelector('.stat-num');
+                    const target = parseInt(box.dataset.target);
+                    const suffix = box.dataset.suffix;
+                    if (el && el.textContent === '0') animateCounter(el, target, suffix);
+                });
+                counterObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    const statsRow = document.querySelector('.stats-row');
+    if (statsRow) counterObserver.observe(statsRow);
+
+    // Experience Tabs
+    document.querySelectorAll('.exp-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.exp-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('.exp-content').forEach(c => c.classList.add('hidden'));
+            const content = document.getElementById('tab-' + tab.dataset.tab);
+            if (content) content.classList.remove('hidden');
+        });
+    });
+
+    // Cards Stagger Reveal
+    const cardObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.querySelectorAll('.exp-card').forEach((card, i) => {
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, i * 100);
+                });
+                cardObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.2 });
+
+    document.querySelectorAll('.exp-grid').forEach(g => {
+        g.querySelectorAll('.exp-card').forEach(c => {
+            c.style.opacity = '0';
+            c.style.transform = 'translateY(24px)';
+            c.style.transition = 'opacity 0.5s, transform 0.5s';
+        });
+        cardObserver.observe(g);
+    });
+
+    // Bubble Toggle
+    document.querySelectorAll('.bubble').forEach(b => {
+        b.addEventListener('click', () => b.classList.toggle('active-bubble'));
+    });
+
+    // Parallax Hero
+    window.addEventListener('scroll', () => {
+        const bgText = document.querySelector('.hero-bg-text');
+        if (bgText) bgText.style.transform = `translateY(${window.scrollY * 0.3}px)`;
+    });
+});
